@@ -7,14 +7,14 @@ class ListenersBuilder {
   void Function() onPing;
   void Function() onPong;
   void Function(String httpStatus, String httpsStatusMessage) onOpen;
-  void Function(int code, String reason, String remote) onClose;
+  void Function(int code, String reason, bool remote) onClose;
   void Function(String error) onError;
 
   void addOnOpen(void Function(String httpStatus, String httpsStatusMessage) onOpen) {
     this.onOpen = onOpen;
   }
 
-  void addOnClose(void Function(int code, String reason, String remote) onClose) {
+  void addOnClose(void Function(int code, String reason, bool remote) onClose) {
     this.onClose = onClose;
   }
 
