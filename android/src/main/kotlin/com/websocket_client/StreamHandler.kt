@@ -1,6 +1,7 @@
 package com.websocket_client
 
 import android.os.Handler
+
 import io.flutter.plugin.common.EventChannel
 
 class StreamHandler : EventChannel.StreamHandler {

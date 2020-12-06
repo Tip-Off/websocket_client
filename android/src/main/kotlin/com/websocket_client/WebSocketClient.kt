@@ -1,13 +1,14 @@
 package com.websocket_client
 
 import android.os.Message
+
 import org.java_websocket.WebSocket
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.drafts.Draft
 import org.java_websocket.drafts.Draft_6455
 import org.java_websocket.framing.Framedata
-import org.java_websocket.framing.PongFrame
 import org.java_websocket.handshake.ServerHandshake
+
 import java.net.URI
 import java.nio.ByteBuffer
 
@@ -20,10 +21,10 @@ constructor(serverUri: URI, private var streamHandler: StreamHandler, protocolDr
         eventResult["httpStatus"] = handshakeData?.httpStatus.toString()
         eventResult["httpStatusMessage"] = handshakeData?.httpStatusMessage.toString()
 
-        val m = Message()
-        eventResult.also { m.obj = it }
+        val message = Message()
+        eventResult.also { message.obj = it }
 
-        streamHandler.handler?.sendMessage(m)
+        streamHandler.handler?.sendMessage(message)
     }
 
     override fun onClose(code: Int, reason: String?, remote: Boolean) {
@@ -34,10 +35,10 @@ constructor(serverUri: URI, private var streamHandler: StreamHandler, protocolDr
         eventResult["reason"] = reason.toString()
         eventResult["remote"] = remote
 
-        val m = Message()
-        eventResult.also { m.obj = it }
+        val message = Message()
+        eventResult.also { message.obj = it }
 
-        streamHandler.handler?.sendMessage(m)
+        streamHandler.handler?.sendMessage(message)
     }
 
     override fun onMessage(message: String?) {
@@ -45,10 +46,10 @@ constructor(serverUri: URI, private var streamHandler: StreamHandler, protocolDr
         eventResult["event"] = Event.ON_MESSAGE.ordinal
         eventResult["message"] = message.toString()
 
-        val m = Message()
-        eventResult.also { m.obj = it }
+        val message = Message()
+        eventResult.also { message.obj = it }
 
-        streamHandler.handler?.sendMessage(m)
+        streamHandler.handler?.sendMessage(message)
     }
 
     override fun onMessage(bytes: ByteBuffer?) {
@@ -56,26 +57,40 @@ constructor(serverUri: URI, private var streamHandler: StreamHandler, protocolDr
         eventResult["event"] = Event.ON_MESSAGE.ordinal
         eventResult["message"] = bytes?.array()!!
 
-        val m = Message()
-        eventResult.also { m.obj = it }
+        val message = Message()
+        eventResult.also { message.obj = it }
 
-        streamHandler.handler?.sendMessage(m)
+        streamHandler.handler?.sendMessage(message)
     }
 
     override fun onError(ex: Exception?) {
         val eventResult = HashMap<String, Any>()
         eventResult["event"] = Event.ON_ERROR.ordinal
-        eventResult["message"] = ex?.message.toString()
+        eventResult["error"] = ex?.message.toString()
 
-        val m = Message()
-        eventResult.also { m.obj = it }
+        val message = Message()
+        eventResult.also { message.obj = it }
 
-        streamHandler.handler?.sendMessage(m)
+        streamHandler.handler?.sendMessage(message)
     }
 
     override fun onWebsocketPing(conn: WebSocket?, frameData: Framedata?) {
-        val f = PongFrame()
-        f.setPayload(frameData?.payloadData)
-        conn?.sendFrame(f)
+        val eventResult = HashMap<String, Any>()
+        eventResult["event"] = Event.ON_PING.ordinal
+
+        val message = Message()
+        eventResult.also { message.obj = it }
+
+        streamHandler.handler?.sendMessage(message)
+    }
+
+    override fun onWebsocketPong(conn: WebSocket?, frameData: Framedata?) {
+        val eventResult = HashMap<String, Any>()
+        eventResult["event"] = Event.ON_PONG.ordinal
+
+        val message = Message()
+        eventResult.also { message.obj = it }
+
+        streamHandler.handler?.sendMessage(message)
     }
 }

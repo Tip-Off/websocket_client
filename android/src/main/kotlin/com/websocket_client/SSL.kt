@@ -1,5 +1,6 @@
 package com.websocket_client
 
+import android.annotation.SuppressLint
 import android.content.Context
 
 import java.io.IOException
@@ -7,15 +8,18 @@ import java.io.InputStream
 import java.security.*
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
+
 import javax.net.ssl.*
 
 class SSL {
     companion object {
         fun getContext(): SSLContext {
             val x509TrustManager = object : X509TrustManager {
+                @SuppressLint("TrustAllX509TrustManager")
                 override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
                 }
 
+                @SuppressLint("TrustAllX509TrustManager")
                 override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
                 }
 

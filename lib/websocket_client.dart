@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
-
-enum Event { on_open, on_close, on_error, on_message }
+import 'package:websocket_client/listeners_builder.dart';
 
 class WebsocketClient {
   static const MethodChannel _channel = const MethodChannel('websocket_client');
@@ -27,47 +27,61 @@ class WebsocketClient {
     });
   }
 
+  static Future<void> addHeader(String name, String key, String value) async {
+    await _channel.invokeMethod('addHeader', {'name': name, 'key': key, 'value': value});
+  }
+
+  static Future<String> removeHeader(String name, String key) async {
+    return await _channel.invokeMethod('removeHeader', {'name': name, 'key': key});
+  }
+
+  static Future<void> clearHeaders(String name) async {
+    await _channel.invokeMethod('clearHeaders', {'name': name});
+  }
+
   static Future<void> connect(String name) async {
     await _channel.invokeMethod('connect', {'name': name});
   }
 
-  static Future<bool> send(String name, String message) async {
-    return await _channel.invokeMethod('send', {'name': name, 'message': message});
+  static Future<void> connectBlocking(String name) async {
+    await _channel.invokeMethod('connectBlocking', {'name': name});
   }
 
-  // static sendByteMsg(Uint8List msg) {
-  //   _channel.invokeMethod('sendByteMsg', <String, Uint8List>{'msg': msg});
-  // }
-
-  static Future<bool> close(String name) async {
-    return await _channel.invokeMethod('close', {'name': name});
+  static Future<void> reconnect(String name) async {
+    await _channel.invokeMethod('reconnect', {'name': name});
   }
 
-  static void addListeners(String name, {Function onOpen, Function onMessage, Function onError, Function onClose}) {
-    EventChannel eventChannel = EventChannel("better_socket/$name/event");
+  static Future<void> reconnectBlocking(String name) async {
+    await _channel.invokeMethod('reconnectBlocking', {'name': name});
+  }
 
-    eventChannel.receiveBroadcastStream().listen((data) {
-      var event = data["event"];
-      print(event);
+  static Future<void> send(String name, String message) async {
+    await _channel.invokeMethod('send', {'name': name, 'message': message});
+  }
 
-      if (event == Event.on_open.index && onOpen != null) {
-        var httpStatus = data["httpStatus"];
-        var httpStatusMessage = data["httpStatusMessage"];
+  static Future<void> sendByte(String name, Uint8List message) async {
+    await _channel.invokeMethod('send', {'name': name, 'message': message});
+  }
 
-        onOpen(httpStatus, httpStatusMessage);
-      } else if (event == Event.on_close.index && onClose != null) {
-        var code = data["code"];
-        var reason = data["reason"];
-        var remote = data["remote"];
+  static Future<void> sendPing(String name) async {
+    await _channel.invokeMethod('sendPing', {'name': name});
+  }
 
-        onClose(code, reason, remote);
-      } else if (event == Event.on_message.index && onMessage != null) {
-        var message = data["message"];
-        onMessage(message);
-      } else if (event == Event.on_error.index && onError != null) {
-        var message = data["message"];
-        onError(message);
-      }
-    });
+  static Future<void> sendPong(String name) async {
+    await _channel.invokeMethod('sendPong', {'name': name});
+  }
+
+  static Future<void> close(String name) async {
+    await _channel.invokeMethod('close', {'name': name});
+  }
+
+  static Future<void> closeBlocking(String name) async {
+    await _channel.invokeMethod('closeBlocking', {'name': name});
+  }
+
+  static void addListeners(String name, ListenersBuilder builder) {
+    var eventChannel = EventChannel("better_socket/$name/event");
+
+    eventChannel.receiveBroadcastStream().listen(builder.build());
   }
 }
