@@ -76,6 +76,7 @@ class WebSocketClientPlugin : FlutterPlugin, MethodCallHandler {
             val (webSocket, _) = value
 
             if (webSocket.isOpen) {
+                webSocket.cancelHandler()
                 webSocket.close()
             }
         }

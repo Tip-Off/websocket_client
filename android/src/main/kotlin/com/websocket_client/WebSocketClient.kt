@@ -93,4 +93,8 @@ constructor(serverUri: URI, private var streamHandler: StreamHandler, protocolDr
 
         streamHandler.handler?.sendMessage(message)
     }
+
+    fun cancelHandler() {
+        streamHandler.onCancel(null)
+    }
 }
