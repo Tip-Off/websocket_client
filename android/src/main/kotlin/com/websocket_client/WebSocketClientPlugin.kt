@@ -40,6 +40,7 @@ class WebSocketClientPlugin : FlutterPlugin, MethodCallHandler {
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: MethodChannel.Result) {
         val output = when (call.method) {
             "getPlatformVersion" -> platformVersion()
+            "initialize" -> initialize()
             "send" -> send(call)
             "sendByte" -> sendByte(call)
             "sendPing" -> sendPing(call)
@@ -68,6 +69,20 @@ class WebSocketClientPlugin : FlutterPlugin, MethodCallHandler {
 
     private fun platformVersion(): Either<Pair<String, String>, String> {
         return Either.right("Android ${android.os.Build.VERSION.RELEASE}")
+    }
+
+    private fun initialize(): Either<Pair<String, String>, None> {
+        webSockets.forEach{(_, value) ->
+            val (webSocket, _) = value
+
+            if (webSocket.isOpen) {
+                webSocket.close()
+            }
+        }
+
+        webSockets.clear()
+
+        return Either.right(None)
     }
 
     private fun create(call: MethodCall): Either<Pair<String, String>, String> {
