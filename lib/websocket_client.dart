@@ -14,7 +14,7 @@ class WebsocketClient {
   }
 
   static Future<String> create(String name, String path,
-      {Map<String, String> httpHeaders, bool trustAllHost, String keyStorePath, String keyPassword, String storePassword, String keyStoreType}) async {
+      {Map<String, String>? httpHeaders, bool? trustAllHost, String? keyStorePath, String? keyPassword, String? storePassword, String? keyStoreType}) async {
     return await channel.invokeMethod('create', {
       'name': name,
       'path': path,

@@ -3,12 +3,12 @@ import 'dart:collection';
 import 'package:websocket_client/event.dart';
 
 class ListenersBuilder {
-  void Function(String message) onMessage;
-  void Function() onPing;
-  void Function() onPong;
-  void Function(String httpStatus, String httpsStatusMessage) onOpen;
-  void Function(int code, String reason, bool remote) onClose;
-  void Function(String error) onError;
+  void Function(String message)? onMessage;
+  void Function()? onPing;
+  void Function()? onPong;
+  void Function(String httpStatus, String httpsStatusMessage)? onOpen;
+  void Function(int code, String reason, bool remote)? onClose;
+  void Function(String error)? onError;
 
   void addOnOpen(void Function(String httpStatus, String httpsStatusMessage) onOpen) {
     this.onOpen = onOpen;
@@ -34,7 +34,7 @@ class ListenersBuilder {
     this.onPong = onPong;
   }
 
-  Function build() {
+  void Function(dynamic) build() {
     return (data) {
       var event = Event.values[data["event"]];
 
@@ -65,19 +65,19 @@ class ListenersBuilder {
     if (onMessage != null) {
       final message = data["message"];
 
-      onMessage(message);
+      onMessage!(message);
     }
   }
 
   void handleOnPing() {
     if (onPing != null) {
-      onPing();
+      onPing!();
     }
   }
 
   void handleOnPong() {
     if (onPong != null) {
-      onPong();
+      onPong!();
     }
   }
 
@@ -86,7 +86,7 @@ class ListenersBuilder {
       var httpStatus = data["httpStatus"];
       var httpStatusMessage = data["httpStatusMessage"];
 
-      onOpen(httpStatus, httpStatusMessage);
+      onOpen!(httpStatus, httpStatusMessage);
     }
   }
 
@@ -96,7 +96,7 @@ class ListenersBuilder {
       var reason = data["reason"];
       var remote = data["remote"];
 
-      onClose(code, reason, remote);
+      onClose!(code, reason, remote);
     }
   }
 
@@ -104,7 +104,7 @@ class ListenersBuilder {
     if (onError != null) {
       final error = data["error"];
 
-      onError(error);
+      onError!(error);
     }
   }
 }
