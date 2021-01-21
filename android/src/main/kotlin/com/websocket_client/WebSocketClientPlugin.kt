@@ -1,6 +1,8 @@
 package com.websocket_client
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 
 import androidx.annotation.NonNull
 
@@ -37,34 +39,40 @@ class WebSocketClientPlugin : FlutterPlugin, MethodCallHandler {
         channel.setMethodCallHandler(null)
     }
 
-    override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: MethodChannel.Result) {
-        val output = when (call.method) {
-            "getPlatformVersion" -> platformVersion()
-            "initialize" -> initialize()
-            "send" -> send(call)
-            "sendByte" -> sendByte(call)
-            "sendPing" -> sendPing(call)
-            "sendPong" -> sendPong(call)
-            "create" -> create(call)
-            "addHeader" -> addHeader(call)
-            "removeHeader" -> removeHeader(call)
-            "clearHeaders" -> clearHeaders(call)
-            "connect" -> connect(call)
-            "connectBlocking" -> connectBlocking(call)
-            "reconnect" -> reconnect(call)
-            "reconnectBlocking" -> reconnectBlocking(call)
-            "close" -> close(call)
-            "closeBlocking" -> closeBlocking(call)
-            else -> Either.left(Pair("-1", "Method not implemented"))
-        }
+    override fun onMethodCall(@NonNull call: MethodCall, @NonNull rawResult: MethodChannel.Result) {
+        val result = MethodResultWrapper(rawResult)
 
-        when (output) {
-            is Either.Left -> result.error(output.a.first, output.a.second, null)
-            is Either.Right -> when (output.b) {
-                is None -> result.success(null)
-                else -> result.success(output.b)
-            }
+        when (call.method) {
+            "getPlatformVersion" -> runInThread(result) { platformVersion() }
+            "initialize" -> runInThread(result) { initialize() }
+            "send" -> runInThread(result) { send(call) }
+            "sendByte" -> runInThread(result) { sendByte(call) }
+            "sendPing" -> runInThread(result) { sendPing(call) }
+            "sendPong" -> runInThread(result) { sendPong(call) }
+            "create" -> runInThread(result) { create(call) }
+            "addHeader" -> runInThread(result) { addHeader(call) }
+            "removeHeader" -> runInThread(result) { removeHeader(call) }
+            "clearHeaders" -> runInThread(result) { clearHeaders(call) }
+            "connect" -> runInThread(result) { connect(call) }
+            "connectBlocking" -> runInThread(result) { connectBlocking(call) }
+            "reconnect" -> runInThread(result) { reconnect(call) }
+            "reconnectBlocking" -> runInThread(result) { reconnectBlocking(call) }
+            "close" -> runInThread(result) { close(call) }
+            "closeBlocking" -> runInThread(result) { closeBlocking(call) }
+            else -> runInThread(result) { Either.left(Pair("-1", "Method not implemented")) }
         }
+    }
+
+    private fun runInThread(result: MethodChannel.Result, fn: () -> Either<Pair<String, String>, Any>) {
+        Thread{
+            when (val output = fn()) {
+                is Either.Left -> result.error(output.a.first, output.a.second, null)
+                is Either.Right -> when (output.b) {
+                    is None -> result.success(null)
+                    else -> result.success(output.b)
+                }
+            }
+        }.start()
     }
 
     private fun platformVersion(): Either<Pair<String, String>, String> {
@@ -322,5 +330,21 @@ class WebSocketClientPlugin : FlutterPlugin, MethodCallHandler {
         }
 
         return Either.right(None)
+    }
+
+    private class MethodResultWrapper(private val methodResult: MethodChannel.Result) : MethodChannel.Result {
+        private val handler: Handler = Handler(Looper.getMainLooper())
+
+        override fun success(result: Any?) {
+            handler.post { methodResult.success(result) }
+        }
+
+        override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+            handler.post { methodResult.error(errorCode, errorMessage, errorDetails) }
+        }
+
+        override fun notImplemented() {
+            handler.post { methodResult.notImplemented() }
+        }
     }
 }
